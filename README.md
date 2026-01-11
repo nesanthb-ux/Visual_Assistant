@@ -1,73 +1,93 @@
-# React + TypeScript + Vite
+# Hey Buddy - Multimodal AI Assistant
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Hey Buddy** is a web-based AI assistant that uses voice and video to interact with users. It listens for the wake word "Hey Buddy", and when asked questions, it can see what you see via your webcam and respond intelligently using the **Google Gemini API**.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+*   **Voice Activation**: Continuously listens for "Hey Buddy" to wake up.
+*   **Visual Understanding**: Captures meaningful frames from the webcam to provide context-aware answers.
+*   **Conversational AI**: Powered by Google's Gemini Multimodal models for natural, helpful responses.
+*   **Voice Response**: Speaks back to the user using synthesized speech.
+*   **Immersive Design**: A "Jarvis-like" HUD that visualizes the assistant's state (Idle, Listening, Processing, Speaking).
 
-## React Compiler
+## Architecture & Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The application is built with a modern frontend stack designed for performance and aesthetics:
 
-## Expanding the ESLint configuration
+*   **Frontend**: [React](https://react.dev/) + [Vite](https://vitejs.dev/)
+    *   Fast, responsive UI with hot module replacement.
+*   **Language**: [TypeScript](https://www.typescriptlang.org/)
+    *   Type-safe code for better maintainability.
+*   **Styling**: [TailwindCSS](https://tailwindcss.com/)
+    *   Utility-first CSS for rapid UI development.
+*   **Animations**: [Framer Motion](https://www.framer.com/motion/)
+    *   Fluid animations for UI states (pulsing circles, transitions).
+*   **AI Integration**: [Google Generative AI SDK](https://www.npmjs.com/package/@google/generative-ai)
+    *   Direct integration with Gemini 1.5 Flash models.
+*   **Speech Services**:
+    *   **STT (Speech-to-Text)**: Browser's native `SpeechRecognition` API.
+    *   **TTS (Text-to-Speech)**: Browser's native `SpeechSynthesis` API.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Key Components
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+*   `src/components/AssistantInterface.tsx`: The main visual component handling the UI states and feedback loop.
+*   `src/hooks/useCamera.ts`: Manages webcam access and frame capture.
+*   `src/hooks/useSpeechRecognition.ts`: Handles wake word detection and voice transcription.
+*   `src/services/aiService.ts`: Communicates with Google Gemini API to generate responses.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## UI/UX Design
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+The design philosophy focuses on a "Science Fiction" aesthetic:
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+*   **Dark Mode**: A deep black background puts focus on the content and the "AI" visualizer.
+*   **Glassmorphism**: Translucent overlays over the camera feed create a sense of depth.
+*   **Dynamic Visualizer**:
+    *   **Red Pulse**: Listening/Recording.
+    *   **Blue Pulse**: Processing/Thinking.
+    *   **Green Wave**: Speaking/Responding.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## How to Use
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Prerequisites
+
+*   Node.js installed.
+*   A **Google Gemini API Key**. You can get one from [Google AI Studio](https://aistudio.google.com/).
+
+### Installation
+
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/ecliptic-magnetosphere.git
+    cd ecliptic-magnetosphere
+    ```
+
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+
+3.  Configure API Key:
+    *   Create a `.env` file in the root directory.
+    *   Add your Gemini API key:
+        ```
+        VITE_GEMINI_API_KEY=your_api_key_here
+        ```
+
+4.  Start the app:
+    ```bash
+    npm run dev
+    ```
+
+### Running the App
+
+1.  Open the local URL (e.g., `http://localhost:5173`) in Chrome or Edge (browsers with best Web Speech API support).
+2.  **Allow Permissions**: Grant access to your Camera and Microphone when prompted.
+3.  **Say "Hey Buddy"**: The red indicator will pulse.
+4.  **Ask a Question**:
+    *   *Voice only*: "Tell me a joke."
+    *   *Multimodal*: Hold an object to the camera and say, "What is this?"
+5.  The assistant will process your input and speak the response.
+
+## License
+
+MIT
