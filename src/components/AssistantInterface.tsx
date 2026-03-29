@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Mic, Video, VideoOff, Activity } from 'lucide-react';
+import { Mic, Video, VideoOff, Activity, ChevronLeft } from 'lucide-react';
 import { useCamera } from '../hooks/useCamera';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { generateResponse, speakResponse } from '../services/aiService';
 
 type AssistantState = 'idle' | 'listening' | 'processing' | 'speaking';
 
-export const AssistantInterface: React.FC = () => {
+export const AssistantInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [state, setState] = useState<AssistantState>('idle');
     const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
 
@@ -123,7 +123,16 @@ export const AssistantInterface: React.FC = () => {
             </div>
 
             {/* Controls */}
-            <div className="absolute bottom-8 flex gap-4">
+            <div className="absolute top-8 left-8 z-50">
+                <button
+                    onClick={onBack}
+                    className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-md border border-white/10"
+                >
+                    <ChevronLeft />
+                </button>
+            </div>
+
+            <div className="absolute bottom-8 flex gap-4 z-50">
                 <button
                     onClick={() => cameraActive ? stopCamera() : startCamera()}
                     className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-md border border-white/10"

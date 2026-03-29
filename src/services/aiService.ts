@@ -1,83 +1,67 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
 interface AIResponse {
     text: string;
     action?: string;
 }
 
-// Access API key from environment variables
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-let genAI: GoogleGenerativeAI | null = null;
-let model: any = null;
-
-if (API_KEY) {
-    genAI = new GoogleGenerativeAI(API_KEY);
-    // Use a model that supports vision, e.g., gemini-1.5-flash
-    model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        systemInstruction: "You are a helpful assistant to a blind person. When he asks the question with image respond as if you are a companion, concise but not lacking information.",
-    });
-} else {
-    console.warn("VITE_GEMINI_API_KEY is missing in .env");
-}
+const API_BASE = "http://localhost:3001/api";
 
 export const generateResponse = async (
     prompt: string,
-    imageBase64: string | null
+    imageBase64: string | null = null,
+    sessionId: string = "default_buddy_session"
 ): Promise<AIResponse> => {
-    if (!model) {
-        return {
-            text: "I'm sorry, I don't have an API key configured. Please check your .env file.",
-        };
-    }
-
     try {
         console.log("Generating response for:", prompt);
-
-        let result;
-        if (imageBase64) {
-            // Clean base64 string (remove data:image/jpeg;base64, prefix if present)
-            const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
-
-            const imagePart = {
-                inlineData: {
-                    data: cleanBase64,
-                    mimeType: "image/jpeg",
-                },
-            };
-
-            console.log("Sending prompt + image to Gemini...");
-            result = await model.generateContent([prompt, imagePart]);
-        } else {
-            console.log("Sending text-only prompt to Gemini...");
-            result = await model.generateContent(prompt);
+        
+        const response = await fetch(`${API_BASE}/buddy`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt, sessionId, imageBase64 })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.statusText}`);
         }
-
-        const response = await result.response;
-        const text = response.text();
-
-        return {
-            text: text,
-        };
+        
+        const data = await response.json();
+        return { text: data.text || "No response received." };
     } catch (error) {
         console.error("Error generating response:", error);
-        return {
-            text: "I'm having trouble connecting to my brain right now. Please try again.",
-        };
+        return { text: "I'm having trouble connecting to my brain right now. Please make sure the backend server and npm run dev are both running." };
+    }
+};
+
+export const generateTranslation = async (
+    text: string,
+    targetLanguage: string,
+    sessionId: string = "default_translator_session"
+): Promise<string> => {
+    try {
+        console.log(`Translating to ${targetLanguage}...`);
+        
+        const response = await fetch(`${API_BASE}/translator`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, targetLanguage, sessionId })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        return data.text || "Translation failed.";
+    } catch (error) {
+        console.error("Error generating translation:", error);
+        return "Translation failed. Is the backend server running?";
     }
 };
 
 export const speakResponse = (text: string) => {
-    // Cancel any ongoing speech
     window.speechSynthesis.cancel();
-
     const utterance = new SpeechSynthesisUtterance(text);
-
-    // Try to find a good voice
     const voices = window.speechSynthesis.getVoices();
     const preferredVoice = voices.find(v => v.name.includes("Google") || v.name.includes("Samantha")) || voices[0];
     if (preferredVoice) utterance.voice = preferredVoice;
-
     window.speechSynthesis.speak(utterance);
 };
