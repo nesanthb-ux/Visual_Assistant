@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 
-// Extend Window interface for Web Speech API
+
 declare global {
     interface Window {
         SpeechRecognition: any;
@@ -44,7 +44,7 @@ export const useSpeechRecognition = (onWakeWord: () => void) => {
         recognition.onend = () => {
             // Auto-restart if it stops unexpected, unless explicitly stopped
             if (isListening) {
-                // recognition.start(); // Be careful with loops
+                // recognition.start(); // 
                 setIsListening(false);
             }
         };
@@ -61,8 +61,7 @@ export const useSpeechRecognition = (onWakeWord: () => void) => {
             if (lowerTranscript.includes("hey buddy") || lowerTranscript.includes("hey, buddy")) {
                 console.log("Wake word detected!");
                 onWakeWord();
-                // clear detected wake word to avoid multi-trigger? 
-                // Or just let the parent handle the state change.
+
             }
 
             setTranscript(lowerTranscript);

@@ -14,6 +14,7 @@ export const useCamera = () => {
             setStream(mediaStream);
             if (videoRef.current) {
                 videoRef.current.srcObject = mediaStream;
+                videoRef.current.play().catch(err => console.warn("Video play error:", err));
             }
             setHasPermission(true);
         } catch (err) {
