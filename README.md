@@ -102,3 +102,14 @@ npm run dev
 
 ### 4. Hardware Access
 Ensure that your web browser has explicitly been granted Camera and Microphone permissions, or the core VAD loop will fail.
+
+### 5. Tech stack
+### Key Components
+*   **Frontend**: React 19 + Vite 7 (TypeScript)
+*   **Backend**: Express + Node.js (via `tsx`)
+*   **AI Engine**: [Google Gemini 3.1 Flash](https://aistudio.google.com/) and Gemma 4 (local via Ollama)
+*   **Frameworks**: 
+    *   **Google ADK**: For agentic workflows and session management.
+    *   **Framer Motion**: For fluid, state-driven UI animations.
+    *   **TailwindCSS**: For modern, glassmorphic styling.
+    *   **Lucide React**: For high-quality iconography.
