@@ -115,7 +115,7 @@ function getRunner(appName: string, agentName: string, instruction: string, mode
     const modelStr = localModelName || LOCAL_MODEL_NAME;
     const model = modelProvider === 'local' 
         ? new LocalOpenAILlm(url, modelStr)
-        : "gemini-3.1-flash-lite-preview";
+        : "gemini-3.1-flash";
         
     const agent = new LlmAgent({
         name: agentName,
