@@ -1,251 +1,10 @@
-import React, { useEffect, useState, useCallback, useRef, memo } from 'react';
-import { Mic, Video, VideoOff, Activity, ChevronLeft, Cpu, Cloud, Zap, Settings } from 'lucide-react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+
 import { motion } from 'framer-motion';
+import { Mic, Video, VideoOff, Activity, ChevronLeft, Cpu, Cloud, Zap } from 'lucide-react';
 import { useCamera } from '../hooks/useCamera';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { generateResponse, speakResponse, checkLocalStatus, type ModelProvider } from '../services/aiService';
-
-
-// Create a memoized component for the settings/config UI to prevent unnecessary re-renders
-const LocalSettingsBadge = memo(({
-    localStatus,
-    onConfigure
-}: {
-    localStatus: 'checking' | 'connected' | 'error' | 'idle';
-    onConfigure: (e: React.MouseEvent) => void;
-}) => {
-    return (
-        <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            marginLeft: '4px',
-            borderLeft: '1px solid rgba(255,255,255,0.1)',
-            paddingLeft: '8px'
-        }}>
-            {/* Status indicator */}
-            <div style={{ position: 'relative', width: '8px', height: '8px' }}>
-                {localStatus === 'checking' && (
-                    <span style={{
-                        position: 'absolute',
-                        width: '100%',
-                        height: '100%',
-                        borderRadius: '50%',
-                        background: '#fbbf24',
-                        animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite'
-                    }} />
-                )}
-                <span style={{
-                    position: 'absolute',
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: localStatus === 'checking' ? '#f59e0b' :
-                        localStatus === 'connected' ? '#22c55e' : '#ef4444',
-                    boxShadow: localStatus === 'connected' ? '0 0 8px #22c55e' : 'none'
-                }} />
-            </div>
-
-            {/* Settings button - now using a proper click handler with preventDefault */}
-            <button
-                onMouseDown={(e) => {
-                    // Use onMouseDown instead of onClick to ensure immediate response
-                    e.preventDefault();  // Prevent any default behaviors
-                    e.stopPropagation();
-                }}
-                onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onConfigure(e);
-                }}
-                style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: 4,  // Increased padding for better touch target
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: 4,
-                    transition: 'background 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-                title="Configure Local URL"
-            >
-                <Settings
-                    style={{
-                        width: 14,
-                        height: 14,
-                        color: 'rgba(255,255,255,0.5)',
-                        transition: 'color 0.2s ease'
-                    }}
-                />
-            </button>
-        </div>
-    );
-});
-
-// Add a dedicated URL configuration modal
-const ConfigureUrlModal = memo(({
-    isOpen,
-    currentUrl,
-    onSave,
-    onClose
-}: {
-    isOpen: boolean;
-    currentUrl: string;
-    onSave: (url: string) => void;
-    onClose: () => void;
-}) => {
-    const [inputUrl, setInputUrl] = useState(currentUrl);
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        if (isOpen) {
-            setInputUrl(currentUrl);
-            // Focus input after modal opens
-            setTimeout(() => inputRef.current?.focus(), 100);
-        }
-    }, [isOpen, currentUrl]);
-
-    if (!isOpen) return null;
-
-    return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            style={{
-                position: 'fixed',
-                inset: 0,
-                background: 'rgba(0,0,0,0.8)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1000,
-                backdropFilter: 'blur(4px)'
-            }}
-        >
-            <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                    background: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)',
-                    padding: 24,
-                    borderRadius: 16,
-                    maxWidth: 420,
-                    width: '90%',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-                }}
-            >
-                <h3 style={{
-                    margin: '0 0 16px 0',
-                    color: '#fff',
-                    fontSize: 18,
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8
-                }}>
-                    <Settings style={{ width: 20, height: 20 }} />
-                    Configure Local Model URL
-                </h3>
-
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={inputUrl}
-                    onChange={(e) => setInputUrl(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            onSave(inputUrl);
-                        } else if (e.key === 'Escape') {
-                            onClose();
-                        }
-                    }}
-                    style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: 8,
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        background: 'rgba(0,0,0,0.4)',
-                        color: '#fff',
-                        fontSize: 14,
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                        marginBottom: 16,
-                        transition: 'border-color 0.2s ease'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'rgba(59,130,246,0.5)'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.2)'}
-                />
-
-                <div style={{
-                    display: 'flex',
-                    gap: 12,
-                    justifyContent: 'flex-end'
-                }}>
-                    <button
-                        onClick={onClose}
-                        style={{
-                            padding: '10px 20px',
-                            borderRadius: 8,
-                            background: 'transparent',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            color: '#9ca3af',
-                            cursor: 'pointer',
-                            fontSize: 14,
-                            fontWeight: 500,
-                            transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                            e.currentTarget.style.color = '#fff';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.color = '#9ca3af';
-                        }}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={() => onSave(inputUrl)}
-                        style={{
-                            padding: '10px 20px',
-                            borderRadius: 8,
-                            background: 'rgba(59,130,246,0.2)',
-                            border: '1px solid rgba(59,130,246,0.4)',
-                            color: '#60a5fa',
-                            cursor: 'pointer',
-                            fontSize: 14,
-                            fontWeight: 500,
-                            transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(59,130,246,0.3)';
-                            e.currentTarget.style.boxShadow = '0 0 12px rgba(59,130,246,0.3)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(59,130,246,0.2)';
-                            e.currentTarget.style.boxShadow = 'none';
-                        }}
-                    >
-                        Save
-                    </button>
-                </div>
-            </motion.div>
-        </motion.div>
-    );
-});
-
-
 
 type AssistantState = 'idle' | 'listening' | 'processing' | 'speaking';
 
@@ -256,7 +15,6 @@ export const AssistantInterface: React.FC<{ onBack: () => void }> = ({ onBack })
     const [modelProvider, setModelProvider] = useState<ModelProvider>('gemini');
     const [localUrl, setLocalUrl] = useState<string>('http://localhost:11434/v1');
     const [localStatus, setLocalStatus] = useState<'checking' | 'connected' | 'error' | 'idle'>('idle');
-    const [showConfigModal, setShowConfigModal] = useState(false);
 
     const { videoRef, startCamera, stopCamera, captureFrame, hasPermission: cameraActive } = useCamera();
 
@@ -336,38 +94,19 @@ export const AssistantInterface: React.FC<{ onBack: () => void }> = ({ onBack })
         }
     }, [transcript, state, captureFrame, modelProvider, localUrl]);
 
-    // const handleConfigurePort = (e: React.MouseEvent) => {
-    //     e.stopPropagation();
-    //     const newUrl = window.prompt("Enter Local Model API URL:", localUrl);
-    //     // if (newUrl) setLocalUrl(newUrl);
-    //     // Only update if the value actually changed and isn't null
-    //     if (newUrl && newUrl !== localUrl) {
-    //         setLocalStatus('checking'); // Set it once manually
-    //         setLocalUrl(newUrl);
-    //     }
-    // };
-    // Update the handleConfigurePort function:
-    const handleConfigurePort = useCallback((e: React.MouseEvent) => {
-        e.preventDefault();
+    const handleConfigurePort = (e: React.MouseEvent) => {
         e.stopPropagation();
-        // Use a modal instead of window.prompt to avoid thread blocking issues
-        setShowConfigModal(true);
-    }, []);
-
-    const handleSaveUrl = useCallback((newUrl: string) => {
-        setLocalUrl(newUrl);
-        setShowConfigModal(false);
-    }, []);
+        const newUrl = window.prompt("Enter Local Model API URL:", localUrl);
+        // if (newUrl) setLocalUrl(newUrl);
+        // Only update if the value actually changed and isn't null
+        if (newUrl && newUrl !== localUrl) {
+            setLocalStatus('checking'); // Set it once manually
+            setLocalUrl(newUrl);
+        }
+    };
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100dvh', background: '#000', overflow: 'hidden', display: 'flex', flexDirection: 'column', color: '#fff', fontFamily: 'sans-serif' }}>
-            {/* Add the modal at the root level of the component */}
-            <ConfigureUrlModal
-                isOpen={showConfigModal}
-                currentUrl={localUrl}
-                onSave={handleSaveUrl}
-                onClose={() => setShowConfigModal(false)}
-            />
             <video
                 ref={videoRef}
                 autoPlay
@@ -415,10 +154,17 @@ export const AssistantInterface: React.FC<{ onBack: () => void }> = ({ onBack })
 
                         {/* Local Status Indicator & Config inline */}
                         {modelProvider === 'local' && (
-                            <LocalSettingsBadge
-                                localStatus={localStatus}
-                                onConfigure={handleConfigurePort}
-                            />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '8px' }}>
+                                <div style={{ position: 'relative', width: '8px', height: '8px' }}>
+                                    {localStatus === 'checking' && <span style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', background: '#fbbf24', animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite' }} />}
+                                    <span style={{ position: 'absolute', width: '8px', height: '8px', borderRadius: '50%', background: localStatus === 'checking' ? '#f59e0b' : localStatus === 'connected' ? '#22c55e' : '#ef4444', boxShadow: localStatus === 'connected' ? '0 0 8px #22c55e' : 'none' }} />
+                                </div>
+                                <button onClick={(e) => { e.stopPropagation(); handleConfigurePort(e); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }} title="Configure Local URL">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, color: 'rgba(255,255,255,0.5)' }}>
+                                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
