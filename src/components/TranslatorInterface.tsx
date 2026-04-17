@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Mic, MicOff, Volume2, Copy, Check, RotateCcw, Zap, Cloud, Cpu, Settings } from 'lucide-react';
+import { ChevronLeft, Mic, MicOff, Volume2, Copy, Check, RotateCcw, Zap, Cloud, Cpu, Settings, Send } from 'lucide-react';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { generateTranslation, speakResponse, checkLocalStatus, type ModelProvider } from '../services/aiService';
 
@@ -370,6 +370,7 @@ export const TranslatorInterface: React.FC<{ onBack: () => void }> = ({ onBack }
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastTranscript, setLastTranscript] = useState('');
+  const [textInput, setTextInput] = useState('');
 
   const [modelProvider, setModelProvider] = useState<ModelProvider>('gemini');
   const [localUrl, setLocalUrl] = useState<string>('http://localhost:11434/v1');
@@ -668,11 +669,65 @@ export const TranslatorInterface: React.FC<{ onBack: () => void }> = ({ onBack }
                     style={{ width: '100%', textAlign: 'center' }}>
                     <div style={{ fontSize: 28, marginBottom: 8 }}>🎙</div>
                     <p style={{ margin: 0, fontSize: 14, color: '#374151', fontStyle: 'italic' }}>
-                      {isListening ? 'Speak now…' : 'Tap the mic to start listening'}
+                      {isListening ? 'Speak now…' : 'Tap the mic to start listening or type below'}
                     </p>
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
+
+            {/* Manual text entry */}
+            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+              <input
+                type="text"
+                value={textInput}
+                onChange={e => setTextInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && textInput.trim()) {
+                    doTranslate(textInput);
+                    setTextInput('');
+                  }
+                }}
+                placeholder="Type here to translate..."
+                style={{
+                  flex: 1,
+                  background: 'rgba(0,0,0,0.3)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  color: '#fff',
+                  outline: 'none',
+                  fontSize: '14px',
+                  transition: 'border-color 0.2s',
+                }}
+                onFocus={(e) => e.target.style.borderColor = 'rgba(167,139,250,0.5)'}
+                onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+              />
+              <motion.button
+                whileTap={textInput.trim() ? { scale: 0.95 } : {}}
+                onClick={() => {
+                  if (textInput.trim()) {
+                    doTranslate(textInput);
+                    setTextInput('');
+                  }
+                }}
+                disabled={!textInput.trim()}
+                style={{
+                  background: textInput.trim() ? 'linear-gradient(135deg, #7c3aed, #4338ca)' : 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  padding: '0 16px',
+                  cursor: textInput.trim() ? 'pointer' : 'default',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: textInput.trim() ? '#fff' : '#6b7280',
+                  opacity: textInput.trim() ? 1 : 0.5,
+                  transition: 'all 0.2s',
+                }}
+              >
+                <Send style={{ width: 16, height: 16, marginLeft: '2px' }} />
+              </motion.button>
             </div>
           </div>
         </GlassPanel>

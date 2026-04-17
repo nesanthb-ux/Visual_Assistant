@@ -6,7 +6,7 @@ import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { generateResponse, speakResponse, checkLocalStatus, type ModelProvider } from '../services/aiService';
 
 
-// Create a memoized component for the settings/config UI to prevent unnecessary re-renders
+
 const LocalSettingsBadge = memo(({
     localStatus,
     onConfigure
